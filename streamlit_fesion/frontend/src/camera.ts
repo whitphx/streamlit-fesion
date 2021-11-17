@@ -1,5 +1,11 @@
 import { useEffect } from "react";
 
+function stopStream(stream: MediaStream): void {
+  stream.getTracks().forEach((track) => {
+    track.stop();
+  });
+}
+
 interface UseCameraOptions {
   playing: boolean;
   videoConstraints: MediaStreamConstraints["video"];
@@ -15,6 +21,8 @@ export const useCamera = ({
       return;
     }
 
+    let unmounted = false;
+
     const videoElem = document.createElement("video");
 
     const canvasElem = document.createElement("canvas");
@@ -26,6 +34,10 @@ export const useCamera = ({
 
     let lastFrameTime: number | undefined = undefined;
     const onAnimationFrame = async () => {
+      if (unmounted) {
+        return;
+      }
+
       if (!videoElem.paused && videoElem.currentTime !== lastFrameTime) {
         lastFrameTime = videoElem.currentTime;
 
@@ -50,9 +62,18 @@ export const useCamera = ({
         audio: false,
       })
       .then((_stream) => {
+        if (unmounted) {
+          stopStream(_stream);
+          return;
+        }
+
         stream = _stream;
 
         videoElem.onloadedmetadata = function () {
+          if (unmounted) {
+            return;
+          }
+
           canvasElem.width = videoElem.videoWidth;
           canvasElem.height = videoElem.videoHeight;
           videoElem.play();
@@ -64,15 +85,15 @@ export const useCamera = ({
       });
 
     return () => {
+      unmounted = true;
+
       videoElem.pause();
       videoElem.remove();
 
       canvasElem.remove();
 
       if (stream) {
-        stream.getTracks().forEach((track) => {
-          track.stop();
-        });
+        stopStream(stream);
       }
     };
   }, [playing, videoConstraints, onFrame]);
