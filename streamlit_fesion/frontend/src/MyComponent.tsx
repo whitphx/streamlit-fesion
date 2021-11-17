@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
+import pythonProgram from "!!raw-loader!./program.py"; // eslint-disable-line
 
 const MyComponent: React.VFC = () => {
   const [playing, setPlaying] = useState(false);
@@ -31,7 +32,7 @@ const MyComponent: React.VFC = () => {
       return;
     }
 
-    console.log(pyodide.runPython("1 + 2")); // XXX: Sample
+    console.log(pyodide.runPython(pythonProgram)); // XXX: Sample
   }, [pyodide]);
 
   return (
