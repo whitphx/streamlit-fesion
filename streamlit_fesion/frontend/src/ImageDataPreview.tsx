@@ -20,6 +20,9 @@ const ImageDataPreview: React.VFC<ImageDataPreviewProps> = (props) => {
     canvasElem.height = imageData.height
 
     Streamlit.setFrameHeight()
+    return () => {
+      Streamlit.setFrameHeight()
+    }
   }, [imageData.width, imageData.height])
 
   // Draw canvas
