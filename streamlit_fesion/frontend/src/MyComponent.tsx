@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import { useCamera } from "./camera"
+import { usePyodide } from "./PyodideProvider"
 import ImageDataPreview from "./ImageDataPreview"
 
 const MyComponent: React.VFC = () => {
@@ -23,6 +24,15 @@ const MyComponent: React.VFC = () => {
     videoConstraints: true,
     onFrame,
   })
+
+  const pyodide = usePyodide()
+  useEffect(() => {
+    if (pyodide == null) {
+      return
+    }
+
+    console.log(pyodide.runPython("1 + 2")) // XXX: Sample
+  }, [pyodide])
 
   return (
     <div>
