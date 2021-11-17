@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
-import pythonProgram from "!!raw-loader!./program.py"; // eslint-disable-line
+import pythonProgram from "!!raw-loader!./program.py";
 
 const MyComponent: React.VFC = () => {
   const [playing, setPlaying] = useState(false);
