@@ -1,11 +1,15 @@
-import { useEffect } from "react"
+import { useEffect } from "react";
 
 interface UseCameraOptions {
   playing: boolean;
   videoConstraints: MediaStreamConstraints["video"];
   onFrame: (imageData: ImageData) => void | Promise<void>;
 }
-export const useCamera = ({ playing, videoConstraints, onFrame }: UseCameraOptions) => {
+export const useCamera = ({
+  playing,
+  videoConstraints,
+  onFrame,
+}: UseCameraOptions) => {
   useEffect(() => {
     if (!playing) {
       return;
@@ -17,40 +21,47 @@ export const useCamera = ({ playing, videoConstraints, onFrame }: UseCameraOptio
     const canvasCtx = canvasElem.getContext("2d"); // TODO: Check if another context type is better.
 
     if (canvasCtx == null) {
-      throw new Error("Failed to get a canvas context.")
+      throw new Error("Failed to get a canvas context.");
     }
 
-    let lastFrameTime: number | undefined = undefined
+    let lastFrameTime: number | undefined = undefined;
     const onAnimationFrame = async () => {
       if (!videoElem.paused && videoElem.currentTime !== lastFrameTime) {
         lastFrameTime = videoElem.currentTime;
 
         canvasCtx.drawImage(videoElem, 0, 0);
-        const imageData = canvasCtx.getImageData(0, 0, canvasElem.width, canvasElem.height);
+        const imageData = canvasCtx.getImageData(
+          0,
+          0,
+          canvasElem.width,
+          canvasElem.height
+        );
 
-        await onFrame(imageData) // NOTE: Wait for the promise resolution here, but parallel execution may also be an option.
+        await onFrame(imageData); // NOTE: Wait for the promise resolution here, but parallel execution may also be an option.
       }
 
-      window.requestAnimationFrame(onAnimationFrame)
-    }
+      window.requestAnimationFrame(onAnimationFrame);
+    };
 
     let stream: MediaStream | null = null;
-    navigator.mediaDevices.getUserMedia({
-      video: videoConstraints,
-      audio: false,
-    }).then((_stream) => {
-      stream = _stream;
+    navigator.mediaDevices
+      .getUserMedia({
+        video: videoConstraints,
+        audio: false,
+      })
+      .then((_stream) => {
+        stream = _stream;
 
-      videoElem.onloadedmetadata = function () {
-        canvasElem.width = videoElem.videoWidth;
-        canvasElem.height = videoElem.videoHeight;
-        videoElem.play();
+        videoElem.onloadedmetadata = function () {
+          canvasElem.width = videoElem.videoWidth;
+          canvasElem.height = videoElem.videoHeight;
+          videoElem.play();
 
-        window.requestAnimationFrame(onAnimationFrame)
-      }
+          window.requestAnimationFrame(onAnimationFrame);
+        };
 
-      videoElem.srcObject = stream;
-    });
+        videoElem.srcObject = stream;
+      });
 
     return () => {
       videoElem.pause();
@@ -61,8 +72,8 @@ export const useCamera = ({ playing, videoConstraints, onFrame }: UseCameraOptio
       if (stream) {
         stream.getTracks().forEach((track) => {
           track.stop();
-        })
+        });
       }
-    }
-  }, [playing, videoConstraints, onFrame])
-}
+    };
+  }, [playing, videoConstraints, onFrame]);
+};

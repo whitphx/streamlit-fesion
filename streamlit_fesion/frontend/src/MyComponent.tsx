@@ -1,38 +1,38 @@
-import React, { useState, useCallback, useEffect } from "react"
-import { useCamera } from "./camera"
-import { usePyodide } from "./PyodideProvider"
-import ImageDataPreview from "./ImageDataPreview"
+import React, { useState, useCallback, useEffect } from "react";
+import { useCamera } from "./camera";
+import { usePyodide } from "./PyodideProvider";
+import ImageDataPreview from "./ImageDataPreview";
 
 const MyComponent: React.VFC = () => {
-  const [playing, setPlaying] = useState(false)
+  const [playing, setPlaying] = useState(false);
 
-  const play = useCallback(() => setPlaying(true), [])
+  const play = useCallback(() => setPlaying(true), []);
   const stop = useCallback(() => {
-    setPlaying(false)
-    setFrame(undefined)
-  }, [])
+    setPlaying(false);
+    setFrame(undefined);
+  }, []);
 
-  const [frame, setFrame] = useState<ImageData>()
+  const [frame, setFrame] = useState<ImageData>();
 
   const onFrame = useCallback((imageData: ImageData) => {
-    console.log("onFrame", imageData)
-    setFrame(imageData)
-  }, [])
+    console.log("onFrame", imageData);
+    setFrame(imageData);
+  }, []);
 
   useCamera({
     playing,
     videoConstraints: true,
     onFrame,
-  })
+  });
 
-  const pyodide = usePyodide()
+  const pyodide = usePyodide();
   useEffect(() => {
     if (pyodide == null) {
-      return
+      return;
     }
 
-    console.log(pyodide.runPython("1 + 2")) // XXX: Sample
-  }, [pyodide])
+    console.log(pyodide.runPython("1 + 2")); // XXX: Sample
+  }, [pyodide]);
 
   return (
     <div>
@@ -45,7 +45,7 @@ const MyComponent: React.VFC = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MyComponent
+export default MyComponent;

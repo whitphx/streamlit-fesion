@@ -1,42 +1,42 @@
-import React, { useEffect, useRef } from "react"
-import { Streamlit } from "streamlit-component-lib"
+import React, { useEffect, useRef } from "react";
+import { Streamlit } from "streamlit-component-lib";
 
 interface ImageDataPreviewProps {
-  imageData: ImageData
+  imageData: ImageData;
 }
 const ImageDataPreview: React.VFC<ImageDataPreviewProps> = (props) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const imageData = props.imageData
+  const imageData = props.imageData;
 
   // Size adjustment
   useEffect(() => {
     if (canvasRef.current == null) {
-      return
+      return;
     }
 
-    const canvasElem = canvasRef.current
-    canvasElem.width = imageData.width
-    canvasElem.height = imageData.height
+    const canvasElem = canvasRef.current;
+    canvasElem.width = imageData.width;
+    canvasElem.height = imageData.height;
 
-    Streamlit.setFrameHeight()
+    Streamlit.setFrameHeight();
     return () => {
-      Streamlit.setFrameHeight()
-    }
-  }, [imageData.width, imageData.height])
+      Streamlit.setFrameHeight();
+    };
+  }, [imageData.width, imageData.height]);
 
   // Draw canvas
   useEffect(() => {
     if (canvasRef.current == null) {
-      return
+      return;
     }
 
-    const canvasElem = canvasRef.current
-    const ctx = canvasElem.getContext("2d")
-    ctx?.putImageData(imageData, 0, 0)
-  }, [imageData])
+    const canvasElem = canvasRef.current;
+    const ctx = canvasElem.getContext("2d");
+    ctx?.putImageData(imageData, 0, 0);
+  }, [imageData]);
 
-  return <canvas ref={canvasRef} />
-}
+  return <canvas ref={canvasRef} />;
+};
 
-export default ImageDataPreview
+export default ImageDataPreview;
