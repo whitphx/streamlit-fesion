@@ -3,6 +3,7 @@ import { useRenderData } from "streamlit-component-lib-react-hooks";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
+import { setComponentValue } from "./component-value";
 
 type ImageDataFilter = (imageData: ImageData) => Promise<ImageData>;
 
@@ -22,6 +23,8 @@ const MyComponent: React.VFC = () => {
 
   const pyodide = usePyodide();
   useEffect(() => {
+    setComponentValue({ pythonError: null });
+
     if (pyodide == null) {
       return;
     }
@@ -58,22 +61,34 @@ const MyComponent: React.VFC = () => {
         self.fesionImageData = imageData.data;
         /* eslint-enable */
 
-        await pyodide.runPythonAsync(`
-        from js import fesionImageWidth, fesionImageHeight, fesionImageData  # Import from JS globals
+        try {
+          await pyodide.runPythonAsync(`
+          from js import fesionImageWidth, fesionImageHeight, fesionImageData  # Import from JS globals
 
-        input_image4chan = ${NUMPY_GLOBAL_ALIAS}.asarray(fesionImageData.to_py()).reshape((fesionImageHeight, fesionImageWidth, 4)) # 4 channels (RGBA)
-        input_image = input_image4chan[:,:,:3]
+          input_image4chan = ${NUMPY_GLOBAL_ALIAS}.asarray(fesionImageData.to_py()).reshape((fesionImageHeight, fesionImageWidth, 4)) # 4 channels (RGBA)
+          input_image = input_image4chan[:,:,:3]
 
-        output_image = ${imageFilterPyFuncName}(input_image)
+          output_image = ${imageFilterPyFuncName}(input_image)
 
-        if ${NUMPY_GLOBAL_ALIAS}.issubdtype(output_image.dtype, ${NUMPY_GLOBAL_ALIAS}.floating):
-            output_image = (output_image * 255).astype(${NUMPY_GLOBAL_ALIAS}.uint8)
+          if ${NUMPY_GLOBAL_ALIAS}.issubdtype(output_image.dtype, ${NUMPY_GLOBAL_ALIAS}.floating):
+              output_image = (output_image * 255).astype(${NUMPY_GLOBAL_ALIAS}.uint8)
 
-        output_alpha = ${NUMPY_GLOBAL_ALIAS}.full((fesionImageHeight, fesionImageWidth, 1), fill_value=255, dtype=${NUMPY_GLOBAL_ALIAS}.uint8)
-        output_image4chan = ${NUMPY_GLOBAL_ALIAS}.concatenate((output_image, output_alpha), axis=2).copy()
+          output_alpha = ${NUMPY_GLOBAL_ALIAS}.full((fesionImageHeight, fesionImageWidth, 1), fill_value=255, dtype=${NUMPY_GLOBAL_ALIAS}.uint8)
+          output_image4chan = ${NUMPY_GLOBAL_ALIAS}.concatenate((output_image, output_alpha), axis=2).copy()
 
-        output_height, output_width = output_image4chan.shape[:2]
-        `);
+          output_height, output_width = output_image4chan.shape[:2]
+          `);
+        } catch (err: any) {
+          if (err.name === "PythonError") {
+            const serializableError = {
+              stack: err.stack,
+              message: err.message,
+            };
+            setComponentValue({ pythonError: serializableError });
+          }
+          setPlaying(false);
+          throw err;
+        }
 
         const outputImageProxy: PyProxy =
           pyodide.globals.get("output_image4chan");

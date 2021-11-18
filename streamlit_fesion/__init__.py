@@ -20,10 +20,24 @@ else:
     _component_func = components.declare_component("streamlit_fesion", path=build_dir)
 
 
+class ClientSideError(Exception):
+    def __init__(self, message: str, stack: str) -> None:
+        super().__init__(message)
+        self.message = message
+        self.stack = stack
+
+
 def streamlit_fesion(filter_func: ImageFilterFunc, dep_packages: Optional[List[str]] = None, key: Optional[str] = None):
     func_def_code, func_name = transpile_image_filter_func(filter_func)
-    component_value = _component_func(func_def_code=func_def_code, dep_packages=dep_packages, func_name=func_name, key=key)
-    return component_value
+
+    component_value = _component_func(func_def_code=func_def_code, dep_packages=dep_packages, func_name=func_name, key=key, default=None)
+
+    if component_value is None:
+        return
+
+    python_error = component_value.get("pythonError")
+    if python_error:
+        raise ClientSideError(message=python_error["message"], stack=python_error["stack"])
 
 
 if not _RELEASE:
