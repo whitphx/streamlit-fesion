@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
+import Button from "@mui/material/Button";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
@@ -169,9 +170,13 @@ const MyComponent: React.VFC = () => {
       <div>{frame && <ImageDataPreview imageData={frame} />}</div>
       <div>
         {playing ? (
-          <button onClick={stop}>Stop</button>
+          <Button variant="contained" onClick={stop}>
+            Stop
+          </Button>
         ) : (
-          <button onClick={play}>Play</button>
+          <Button variant="contained" onClick={play}>
+            Play
+          </Button>
         )}
       </div>
     </div>
