@@ -9,21 +9,12 @@ type ImageDataFilter = (imageData: ImageData) => Promise<ImageData>;
 const NUMPY_GLOBAL_ALIAS = "gai6sa2eM9Atiev5Shu5ohtie6phai8i"; // To avoid name conflict
 
 const MyComponent: React.VFC = () => {
-  const [playing, setPlaying] = useState(false);
-
-  const play = useCallback(() => setPlaying(true), []);
-  const stop = useCallback(() => {
-    setPlaying(false);
-    setFrame(undefined);
-  }, []);
-
   const renderData = useRenderData();
 
   const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
   const imageFilterPyFuncName = renderData.args["func_name"];
   const iamgeFilterDepPackages: string[] | null =
     renderData.args["dep_packages"];
-
   const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
 
   const [imageDataFilter, setImageDataFilter] =
@@ -118,6 +109,14 @@ const MyComponent: React.VFC = () => {
   ]);
 
   const [frame, setFrame] = useState<ImageData>();
+
+  const [playing, setPlaying] = useState(false);
+
+  const play = useCallback(() => setPlaying(true), []);
+  const stop = useCallback(() => {
+    setPlaying(false);
+    setFrame(undefined);
+  }, []);
 
   const playingRef = useRef(false);
   playingRef.current = playing;
