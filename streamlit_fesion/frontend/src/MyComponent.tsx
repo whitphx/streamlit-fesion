@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { useRenderData } from "streamlit-component-lib-react-hooks";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
@@ -16,16 +17,12 @@ const MyComponent: React.VFC = () => {
     setFrame(undefined);
   }, []);
 
-  // TODO: Make these injectable
-  const imageFilterPyFuncDefCode = `
-  import skimage
+  const renderData = useRenderData();
 
-  def filter(input_image):
-      grayscale = skimage.color.rgb2gray(input_image)
-      return skimage.color.gray2rgb(grayscale)
-  `;
-  const imageFilterPyFuncName = "filter";
-  const iamgeFilterDepPackages: string[] = [];
+  const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
+  const imageFilterPyFuncName = renderData.args["func_name"];
+  const iamgeFilterDepPackages: string[] = renderData.args["dep_packages"];
+
   const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
 
   const [imageDataFilter, setImageDataFilter] =

@@ -17,7 +17,16 @@ else:
 
 
 def streamlit_fesion():
-    component_value = _component_func()
+    func_def_code = """
+import skimage
+
+def filter(input_image):
+    grayscale = skimage.color.rgb2gray(input_image)
+    return skimage.color.gray2rgb(grayscale)
+    """
+    dep_packages = []
+    func_name = "filter"
+    component_value = _component_func(func_def_code=func_def_code, dep_packages=dep_packages, func_name=func_name)
     return component_value
 
 
