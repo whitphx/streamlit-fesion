@@ -59,4 +59,4 @@ jobs:
         poetry run mypy .
     - name: Test with pytest
       run: |
-        pytest
+        poetry run pytest
