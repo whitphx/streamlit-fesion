@@ -6,7 +6,7 @@ function stopStream(stream: MediaStream): void {
   });
 }
 
-type onFrameFn = (imageData: ImageData) => void | Promise<void>
+type onFrameFn = (imageData: ImageData) => void | Promise<void>;
 
 interface UseCameraOptions {
   playing: boolean;
