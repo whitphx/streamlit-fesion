@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 function stopStream(stream: MediaStream): void {
   stream.getTracks().forEach((track) => {
@@ -6,16 +6,21 @@ function stopStream(stream: MediaStream): void {
   });
 }
 
+type onFrameFn = (imageData: ImageData) => void | Promise<void>
+
 interface UseCameraOptions {
   playing: boolean;
   videoConstraints: MediaStreamConstraints["video"];
-  onFrame: (imageData: ImageData) => void | Promise<void>;
+  onFrame: onFrameFn;
 }
 export const useCamera = ({
   playing,
   videoConstraints,
   onFrame,
 }: UseCameraOptions): void => {
+  const onFrameFnRef = useRef<onFrameFn>(onFrame);
+  onFrameFnRef.current = onFrame;
+
   useEffect(() => {
     if (!playing) {
       return;
@@ -49,7 +54,7 @@ export const useCamera = ({
           canvasElem.height
         );
 
-        await onFrame(imageData); // NOTE: Wait for the promise resolution here, but parallel execution may also be an option.
+        await onFrameFnRef.current(imageData); // NOTE: Wait for the promise resolution here, but parallel execution may also be an option.
       }
 
       window.requestAnimationFrame(onAnimationFrame);
@@ -96,5 +101,5 @@ export const useCamera = ({
         stopStream(stream);
       }
     };
-  }, [playing, videoConstraints, onFrame]);
+  }, [playing, videoConstraints]);
 };
