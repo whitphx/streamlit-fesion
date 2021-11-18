@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
 import ImageDataPreview from "./ImageDataPreview";
@@ -144,6 +146,7 @@ const MyComponent: React.VFC = () => {
       }
       if (!imageDataFilter) {
         console.log("Python packages have not been loaded.");
+        setFrame(imageData);
         return;
       }
 
@@ -166,9 +169,25 @@ const MyComponent: React.VFC = () => {
   });
 
   return (
-    <div>
-      <div>{frame && <ImageDataPreview imageData={frame} />}</div>
-      <div>
+    <Box>
+      <Box position="relative" display="inline-block">
+        {playing && !imageDataFilter && (
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <CircularProgress size={80} />
+          </Box>
+        )}
+        <Box>{frame && <ImageDataPreview imageData={frame} />}</Box>
+      </Box>
+      <Box>
         {playing ? (
           <Button variant="contained" onClick={stop}>
             Stop
@@ -178,8 +197,8 @@ const MyComponent: React.VFC = () => {
             Play
           </Button>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
