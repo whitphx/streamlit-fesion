@@ -71,7 +71,7 @@ const MyComponent: React.VFC = () => {
         if np.issubdtype(output_image.dtype, np.floating):
             output_image = (output_image * 255).astype(np.uint8)
 
-        output_alpha = np.ones((fesionImageHeight, fesionImageWidth, 1), dtype=np.uint8) * 255
+        output_alpha = np.full((fesionImageHeight, fesionImageWidth, 1), fill_value=255, dtype=np.uint8)
         output_image4chan = np.concatenate((output_image, output_alpha), axis=2).copy()
 
         output_height, output_width = output_image4chan.shape[:2]
