@@ -10471,10 +10471,10 @@ stream-shift@^1.0.0:
   resolved "https://registry.npmjs.org/stream-shift/-/stream-shift-1.0.1.tgz"
   integrity sha512-AiisoFqQ0vbGcZgQPY1cdP2I76glaVA/RauYR4G4thNFgkTqr90yXTo4LYX60Jl+sIlPNHHdGSwo01AvbKUSVQ==
 
-streamlit-component-lib-react-hooks@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.npmjs.org/streamlit-component-lib-react-hooks/-/streamlit-component-lib-react-hooks-0.3.0.tgz"
-  integrity sha512-SWgURDu8j49W+aNALKQilVqL2tmbiWdKTqcEpimwNrfGl2dPSsTvuGDnqOVj6GMZI7QI7y2CcDxysC9LtbEhdQ==
+streamlit-component-lib-react-hooks@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/streamlit-component-lib-react-hooks/-/streamlit-component-lib-react-hooks-0.3.1.tgz#b81ac41c8e5c8adb3371eb7998ca344b86bc5d37"
+  integrity sha512-speMfExtcp12DD/ZLT39Kz9StZs9m4SJZnx3y/CqTKFGs4G5EofmDM5RWezM5VfjS+2Bvgs+/8gzUhusBiNFMA==
   dependencies:
     streamlit-component-lib "^1.2.0"
 
