@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
 import { useCamera } from "./camera";
 import { usePyodide } from "./PyodideProvider";
@@ -119,6 +119,8 @@ const MyComponent: React.VFC = () => {
 
   const [frame, setFrame] = useState<ImageData>();
 
+  const playingRef = useRef(false);
+  playingRef.current = playing;
   const onFrame = useCallback(
     async (imageData: ImageData) => {
       if (pyodide == null) {
@@ -131,6 +133,12 @@ const MyComponent: React.VFC = () => {
       }
 
       const outImageData = await imageDataFilter.fn(imageData);
+
+      // Here is called asynchronously, so use ref to check the `playing` value.
+      if (!playingRef.current) {
+        setFrame(undefined);
+        return;
+      }
       setFrame(outImageData);
     },
     [pyodide, imageDataFilter]
