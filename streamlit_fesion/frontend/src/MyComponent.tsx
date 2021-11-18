@@ -16,8 +16,6 @@ const MyComponent: React.VFC = () => {
     setFrame(undefined);
   }, []);
 
-  const [frame, setFrame] = useState<ImageData>();
-
   // TODO: Make these injectable
   const imageFilterPyFuncDefCode = `
   import skimage
@@ -116,6 +114,8 @@ const MyComponent: React.VFC = () => {
     imageFilterPyFuncDefCode,
     imageFilterDepPackagesJson,
   ]);
+
+  const [frame, setFrame] = useState<ImageData>();
 
   const onFrame = useCallback(
     async (imageData: ImageData) => {
