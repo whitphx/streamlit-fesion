@@ -15,7 +15,7 @@ export const useCamera = ({
   playing,
   videoConstraints,
   onFrame,
-}: UseCameraOptions) => {
+}: UseCameraOptions): void => {
   useEffect(() => {
     if (!playing) {
       return;
