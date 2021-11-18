@@ -1,0 +1,12 @@
+[flake8]
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    build,
+    dist,
+    fronend,
+    .pytest_cache
+# Black compatible configs
+max-line-length = 88
+extend-ignore = E203
