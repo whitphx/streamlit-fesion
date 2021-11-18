@@ -5,14 +5,14 @@ on:
     branches:
       - main
       - develop/**
-    paths:
-      - 'streamlit_fesion/frontend/**'
+    # paths:
+    #   - 'streamlit_fesion/frontend/**'
   pull_request:
     branches:
       - main
       - develop/**
-    paths:
-      - 'streamlit_fesion/frontend/**'
+    # paths:
+    #   - 'streamlit_fesion/frontend/**'
 
 jobs:
   build:
