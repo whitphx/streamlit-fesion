@@ -16,7 +16,7 @@ const MyComponent: React.VFC = () => {
   const renderData = useRenderData();
 
   const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
-  const imageFilterPyFuncName = renderData.args["func_name"];
+  const imageFilterPyFuncName = renderData.args["func_name"]; // TODO: Create a denied name list as a func_name, which are already used as global entity names, like `fesionImageWidth`.
   const iamgeFilterDepPackages: string[] | null =
     renderData.args["dep_packages"];
   const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
@@ -49,6 +49,8 @@ const MyComponent: React.VFC = () => {
       if (filterDepPackages) {
         await pyodide.loadPackage(filterDepPackages);
       }
+
+      // TODO: Delete the previous filter func by running "del {func_name}" to avoid memory leak.
 
       // Run the Python code including the user-defined filter function.
       await pyodide.runPythonAsync(imageFilterPyFuncDefCode);

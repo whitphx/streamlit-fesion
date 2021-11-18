@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 from streamlit_fesion.image_filter import ImageFilterFunc, transpile_image_filter_func
 
-_RELEASE = False
+_RELEASE = True
 
 
 if not _RELEASE:
