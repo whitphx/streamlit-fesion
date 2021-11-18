@@ -19,7 +19,7 @@ black = "^21.11b1"
 flake8 = "^4.0.1"
 isort = "^5.10.1"
 mypy = "^0.910"
-scikit-image = "^0.18.3"
+scikit-image = "^0.15.0"  # The version provided with Pyodide
 
 [tool.isort]
 profile = "black"
