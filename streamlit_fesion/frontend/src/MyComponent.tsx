@@ -21,7 +21,8 @@ const MyComponent: React.VFC = () => {
 
   const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
   const imageFilterPyFuncName = renderData.args["func_name"];
-  const iamgeFilterDepPackages: string[] = renderData.args["dep_packages"];
+  const iamgeFilterDepPackages: string[] | null =
+    renderData.args["dep_packages"];
 
   const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
 
@@ -34,7 +35,9 @@ const MyComponent: React.VFC = () => {
       return;
     }
 
-    const filterDepPackages: string[] = JSON.parse(imageFilterDepPackagesJson);
+    const filterDepPackages: string[] | null = JSON.parse(
+      imageFilterDepPackagesJson
+    );
 
     (async () => {
       // Import NumPy, which is used in the wrapper script.
@@ -46,7 +49,9 @@ const MyComponent: React.VFC = () => {
 
       // Load packages used in the user-defined filter function.
       await pyodide.loadPackagesFromImports(imageFilterPyFuncDefCode);
-      await pyodide.loadPackage(filterDepPackages);
+      if (filterDepPackages) {
+        await pyodide.loadPackage(filterDepPackages);
+      }
 
       // Run the Python code including the user-defined filter function.
       await pyodide.runPythonAsync(imageFilterPyFuncDefCode);

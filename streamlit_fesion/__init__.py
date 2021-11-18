@@ -1,4 +1,5 @@
 import os
+from typing import List, Optional
 
 import streamlit.components.v1 as components
 
@@ -19,9 +20,9 @@ else:
     _component_func = components.declare_component("streamlit_fesion", path=build_dir)
 
 
-def streamlit_fesion(filter_func: ImageFilterFunc, dep_packages):
+def streamlit_fesion(filter_func: ImageFilterFunc, dep_packages: Optional[List[str]] = None, key: Optional[str] = None):
     func_def_code, func_name = transpile_image_filter_func(filter_func)
-    component_value = _component_func(func_def_code=func_def_code, dep_packages=dep_packages, func_name=func_name)
+    component_value = _component_func(func_def_code=func_def_code, dep_packages=dep_packages, func_name=func_name, key=key)
     return component_value
 
 
@@ -32,4 +33,4 @@ if not _RELEASE:
         return skimage.color.gray2rgb(grayscale)
 
 
-    streamlit_fesion(image_filter, [])
+    streamlit_fesion(image_filter, [], key="fesion")
