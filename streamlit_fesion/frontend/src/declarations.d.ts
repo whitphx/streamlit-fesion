@@ -11,12 +11,21 @@ interface PyProxy {
   destroy(destroyed_msg?: string): void;
 }
 
+declare namespace Pyodide {
+  type LogFn = (log: string) => void;
+}
+
 interface Pyodide {
   globals: PyProxy;
   loadPackage(
     names: string | string[],
-    messageCallback?: (log: string) => void,
-    errorCallback?: (log: string) => void
+    messageCallback?: Pyodide.LogFn,
+    errorCallback?: Pyodide.LogFn
+  ): Promise<void>;
+  loadPackagesFromImports(
+    code: string,
+    messageCallback?: Pyodide.LogFn,
+    errorCallback?: Pyodide.LogFn
   ): Promise<void>;
   runPython(code: string, globals?: any): any;
   runPythonAsync(code: string): Promise<any>;

@@ -27,7 +27,7 @@ const MyComponent: React.VFC = () => {
       return skimage.color.gray2rgb(grayscale)
   `;
   const imageFilterPyFuncName = "filter";
-  const iamgeFilterDepPackages = ["scikit-image"];
+  const iamgeFilterDepPackages: string[] = [];
   const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
 
   const [imageDataFilter, setImageDataFilter] =
@@ -42,15 +42,18 @@ const MyComponent: React.VFC = () => {
     const filterDepPackages: string[] = JSON.parse(imageFilterDepPackagesJson);
 
     (async () => {
+      // Import NumPy, which is used in the wrapper script.
       await pyodide
-        .loadPackage(["numpy"]) // numpy is used in the Python program
+        .loadPackage(["numpy"])
         .then(() =>
           pyodide.runPythonAsync(`import numpy as ${NUMPY_GLOBAL_ALIAS}`)
         );
 
+      // Load packages used in the user-defined filter function.
+      await pyodide.loadPackagesFromImports(imageFilterPyFuncDefCode);
       await pyodide.loadPackage(filterDepPackages);
 
-      // Run Python code including a function definition
+      // Run the Python code including the user-defined filter function.
       await pyodide.runPythonAsync(imageFilterPyFuncDefCode);
 
       const filterFn: ImageDataFilter = async (imageData) => {
