@@ -21,10 +21,6 @@ def sobel(input_image):
     def sobel_each(image):
         return filters.sobel(image)
 
-    @adapt_rgb(hsv_value)
-    def sobel_hsv(image):
-        return filters.sobel(image)
-
     return rescale_intensity(1 - sobel_each(input_image))
 
 
