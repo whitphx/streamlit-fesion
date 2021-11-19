@@ -72,4 +72,4 @@ elif filter_type == "face_detection":
 else:
     raise ValueError(f'Unexpected filter type "{filter_type}"')
 
-streamlit_fesion(image_filter)
+streamlit_fesion(image_filter, key="example")
