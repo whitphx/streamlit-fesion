@@ -44,17 +44,17 @@ def face_detection(input_image):
 
     detected = detector.detect_multi_scale(
         img=input_image,
-        scale_factor=1.2,
+        scale_factor=1.4,
         step_ratio=1,
         min_size=(60, 60),
-        max_size=(123, 123),
+        max_size=(322, 322),
     )
 
     for patch in detected:
         print(patch)
         rr, cc = rectangle(
-            start=(patch["c"], patch["r"]),
-            extent=(patch["width"], patch["height"]),
+            start=(patch["r"], patch["c"]),
+            extent=(patch["height"], patch["width"]),
             shape=input_image.shape[:2],
         )
         input_image[rr, cc, 0] = 255
