@@ -4,7 +4,7 @@ import { PromiseDelegate } from "@lumino/coreutils";
 // To use worker-loader with CRA,
 // followed https://github.com/dominique-mueller/create-react-app-typescript-web-worker-setup
 declare const self: DedicatedWorkerGlobalScope;
-export default {} as typeof Worker & { new (): Worker };
+export default {} as typeof Worker & { new(): Worker };
 
 interface FesionWorkerContext extends Worker {
   postMessage(message: OutMessage, transfer: Transferable[]): void;
@@ -12,10 +12,10 @@ interface FesionWorkerContext extends Worker {
 }
 
 // Ref: https://v4.webpack.js.org/loaders/worker-loader/#loading-with-worker-loader
-const ctx: FesionWorkerContext = self as any;
+const ctx: FesionWorkerContext = self as any;  // eslint-disable-line @typescript-eslint/no-explicit-any
 
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
-declare let loadPyodide: any;
+declare let loadPyodide: () => Promise<PyodideInterface>;
 
 const NUMPY_GLOBAL_ALIAS = "gai6sa2eM9Atiev5Shu5ohtie6phai8i"; // To avoid name conflict
 

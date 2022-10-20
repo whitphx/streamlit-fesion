@@ -89,6 +89,8 @@ const MyComponent: React.VFC = () => {
           return;
         }
         setFrame(outImageData);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (
           typeof err.stack === "string" &&
