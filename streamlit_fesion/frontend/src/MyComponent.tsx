@@ -5,6 +5,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import { useCamera } from "./camera";
 import ImageDataPreview from "./ImageDataPreview";
+import { setComponentValue } from "./component-value";
 import { WorkerProxy } from "./worker/proxy";
 
 const MyComponent: React.VFC = () => {
@@ -21,6 +22,8 @@ const MyComponent: React.VFC = () => {
   const [workerProxy, setWorkerProxy] = useState<WorkerProxy>();
   useEffect(
     () => {
+      setComponentValue({ pythonError: null });
+
       const filterDepPackages: string[] = JSON.parse(
         imageFilterDepPackagesJson
       );
@@ -41,6 +44,8 @@ const MyComponent: React.VFC = () => {
     if (workerProxy == null || !workerProxy.isLoaded) {
       return;
     }
+
+    setComponentValue({ pythonError: null });
 
     const filterDepPackages: string[] =
       JSON.parse(imageFilterDepPackagesJson) || [];
@@ -75,14 +80,29 @@ const MyComponent: React.VFC = () => {
         setFrame(imageData);
         return;
       }
-      const outImageData = await workerProxy.process(imageData);
 
-      // Here is called asynchronously, so use ref to check the `playing` value.
-      if (!playingRef.current) {
-        setFrame(undefined);
-        return;
+      try {
+        const outImageData = await workerProxy.process(imageData);
+        // Here is called asynchronously, so use ref to check the `playing` value.
+        if (!playingRef.current) {
+          setFrame(undefined);
+          return;
+        }
+        setFrame(outImageData);
+      } catch (err: any) {
+        if (
+          typeof err.stack === "string" &&
+          err.stack.startsWith("PythonError")
+        ) {
+          const serializableError = {
+            stack: err.stack,
+            message: err.message,
+          };
+          setComponentValue({ pythonError: serializableError });
+        }
+        setPlaying(false);
+        throw err;
       }
-      setFrame(outImageData);
     },
     [workerProxy]
   );
