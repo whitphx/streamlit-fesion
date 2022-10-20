@@ -12,15 +12,18 @@ const MyComponent: React.VFC = () => {
 
   const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
   const imageFilterPyFuncName = renderData.args["func_name"]; // TODO: Create a denied name list as a func_name, which are already used as global entity names, like `fesionImageWidth`.
-  const iamgeFilterDepPackages: string[] | null =
-    renderData.args["dep_packages"];
-  const imageFilterDepPackagesJson = JSON.stringify(iamgeFilterDepPackages); // Serialize for memoization
+  const imageFilterDepPackages: string[] =
+    renderData.args["dep_packages"] ?? [];
+  const imageFilterDepPackagesJson = JSON.stringify(
+    imageFilterDepPackages.sort()
+  ); // Serialize for memoization
 
   const [workerProxy, setWorkerProxy] = useState<WorkerProxy>();
   useEffect(
     () => {
-      const filterDepPackages: string[] =
-        JSON.parse(imageFilterDepPackagesJson) || [];
+      const filterDepPackages: string[] = JSON.parse(
+        imageFilterDepPackagesJson
+      );
 
       const workerProxy = new WorkerProxy({
         funcName: imageFilterPyFuncName,
