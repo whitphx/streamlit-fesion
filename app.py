@@ -14,7 +14,7 @@ def grayscale(input_image):
 def sobel(input_image):
     # Ref: https://scikit-image.org/docs/0.15.x/auto_examples/color_exposure/plot_adapt_rgb.html  # noqa: E501
     from skimage import filters
-    from skimage.color.adapt_rgb import adapt_rgb, each_channel, hsv_value
+    from skimage.color.adapt_rgb import adapt_rgb, each_channel
     from skimage.exposure import rescale_intensity
 
     @adapt_rgb(each_channel)
