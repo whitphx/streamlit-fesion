@@ -82,7 +82,7 @@ export class WorkerProxy {
 
   public process(imageData: ImageData): Promise<ImageData> {
     if (!this._isLoaded) {
-      console.debug("Not yet loaded")
+      console.debug("Worker is not loaded")
       return Promise.resolve(imageData);
     }
 
