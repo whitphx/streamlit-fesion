@@ -147,7 +147,10 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
 
         // Delete the previous filter func to avoid memory leaks.
         await pyodide.runPythonAsync(`
-          del ${imageFilterPyFuncName}
+          try:
+              del ${imageFilterPyFuncName}
+          except NameError:
+              pass
         `)
 
         // Run the Python code including the user-defined filter function.
