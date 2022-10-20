@@ -1,8 +1,9 @@
-interface WorkerInitialData {
+interface FilterFuncConfig {
   funcName: string;
   funcDefPyCode: string;
   requirements: string[];
 }
+type WorkerInitialData = FilterFuncConfig;
 
 /**
  * Input messages from kernel to worker
@@ -21,8 +22,12 @@ interface InputImageMessage extends InMessageBase {
     imageData: ImageData
   };
 }
+interface UpdateFilterFuncMessage extends InMessageBase {
+  type: "updateFilterFunc"
+  data: FilterFuncConfig
+}
 type InMessage =
-  | InitDataMessage | InputImageMessage
+  | InitDataMessage | InputImageMessage | UpdateFilterFuncMessage
 
 interface OutMessageBase {
   type: string;

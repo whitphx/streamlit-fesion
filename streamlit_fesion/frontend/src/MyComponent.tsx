@@ -34,6 +34,25 @@ const MyComponent: React.VFC = () => {
       // No deps because workerProxy should not be re-created.
     ]
   );
+  useEffect(() => {
+    if (workerProxy == null) {
+      return;
+    }
+
+    const filterDepPackages: string[] =
+      JSON.parse(imageFilterDepPackagesJson) || [];
+
+    workerProxy.updateFuncCode({
+      funcName: imageFilterPyFuncName,
+      funcDefPyCode: imageFilterPyFuncDefCode,
+      requirements: filterDepPackages,
+    });
+  }, [
+    workerProxy,
+    imageFilterPyFuncName,
+    imageFilterPyFuncDefCode,
+    imageFilterDepPackagesJson,
+  ]);
 
   const [frame, setFrame] = useState<ImageData>();
 

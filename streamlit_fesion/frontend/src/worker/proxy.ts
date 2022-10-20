@@ -8,7 +8,7 @@ interface WorkerProxyOptions {
 
 export class WorkerProxy {
   private worker: Worker;
-  private workerInitialData: WorkerInitialData;
+  private workerInitialData: FilterFuncConfig;
 
   private _isLoaded: boolean;
   public get isLoaded(): boolean {
@@ -99,8 +99,10 @@ export class WorkerProxy {
     });
   }
 
-  //TODO
-  // public updateFuncCode(funcName: string, funcDefPyCode: string, requirements: string[]): Promise<void> {
-
-  // }
+  public updateFuncCode(filterFuncConfig: FilterFuncConfig): Promise<void> {
+    return this._asyncPostMessage({
+      type: "updateFilterFunc",
+      data: filterFuncConfig,
+    });
+  }
 }

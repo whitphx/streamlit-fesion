@@ -19,7 +19,7 @@ declare let loadPyodide: any;
 
 const NUMPY_GLOBAL_ALIAS = "gai6sa2eM9Atiev5Shu5ohtie6phai8i"; // To avoid name conflict
 
-const initDataPromiseDelegate = new PromiseDelegate<WorkerInitialData>();
+const initDataPromiseDelegate = new PromiseDelegate<InitDataMessage["data"]>();
 
 let pyodide: PyodideInterface;
 let imageFilterPyFuncName: string;
@@ -44,8 +44,6 @@ async function loadPyodideAndPackages() {
   // Load packages used in the user-defined filter function.
   await pyodide.loadPackagesFromImports(funcDefPyCode);
   await pyodide.loadPackage(requirements);
-
-  // TODO: Delete the previous filter func by running "del {func_name}" to avoid memory leak.
 
   // Run the Python code including the user-defined filter function.
   await pyodide.runPythonAsync(funcDefPyCode);
@@ -125,19 +123,49 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
   const messagePort = event.ports[0];
   const postReplyMessage = (msg: ReplyMessage) => messagePort.postMessage(msg)
 
-  switch (data.type) {
-    case "inputImage": {
-      const imageData = data.data.imageData;
+  try {
+    switch (data.type) {
+      case "inputImage": {
+        const imageData = data.data.imageData;
 
-      const outputImageData = await filterFn(imageData);
+        const outputImageData = await filterFn(imageData);
 
-      postReplyMessage({
-        type: "outputImage",
-        data: {
-          imageData: outputImageData
-        }
-      })
+        postReplyMessage({
+          type: "outputImage",
+          data: {
+            imageData: outputImageData
+          }
+        })
+        break;
+      }
+      case "updateFilterFunc": {
+        const { funcName, funcDefPyCode, requirements } = data.data;
+
+        // Load packages used in the user-defined filter function.
+        await pyodide.loadPackagesFromImports(funcDefPyCode);
+        await pyodide.loadPackage(requirements);
+
+        // Delete the previous filter func to avoid memory leaks.
+        await pyodide.runPythonAsync(`
+          del ${imageFilterPyFuncName}
+        `)
+
+        // Run the Python code including the user-defined filter function.
+        await pyodide.runPythonAsync(funcDefPyCode);
+
+        imageFilterPyFuncName = funcName;
+
+        postReplyMessage({
+          type: "reply",
+        })
+        break;
+      }
     }
+  } catch (error) {
+    postReplyMessage({
+      type: "reply",
+      error: error as Error,
+    });
   }
 };
 
