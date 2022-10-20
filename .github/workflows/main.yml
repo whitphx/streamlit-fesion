@@ -76,8 +76,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '16.x'
-        cache: 'npm'
-        cache-dependency-path: streamlit_fesion/frontend/package-lock.json
+        cache: 'yarn'
+        cache-dependency-path: streamlit_fesion/frontend/yarn.lock
     - name: Install the frontend dependencies
       run: yarn install --frozen-lockfile
       working-directory: streamlit_fesion/frontend
