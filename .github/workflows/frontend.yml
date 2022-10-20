@@ -1,0 +1,45 @@
+name: Frontend tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop/**
+    paths:
+      - 'streamlit_fesion/frontend/**'
+  pull_request:
+    branches:
+      - main
+      - develop/**
+    paths:
+      - 'streamlit_fesion/frontend/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: streamlit_fesion/frontend
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+        cache-dependency-path: streamlit_fesion/frontend/yarn.lock
+    - run: yarn install --frozen-lockfile
+    - name: Lint
+      run: |
+        yarn run check:eslint
+        yarn run check:prettier
+    # - run: yarn test
+    - run: yarn run build

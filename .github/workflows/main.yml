@@ -1,0 +1,90 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop/**
+    paths-ignore:
+      - 'streamlit_fesion/frontend/**'
+  pull_request:
+    branches:
+      - main
+      - develop/**
+    paths-ignore:
+      - 'streamlit_fesion/frontend/**'
+
+jobs:
+  tests:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # The following steps are based on https://github.com/python-poetry/poetry/blob/601dc7896c812d39b75f2358b17a9460561d3866/.github/workflows/main.yml#L51-L79
+    - name: Get full Python version
+      id: full-python-version
+      run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+
+    - name: Bootstrap poetry
+      run: |
+        curl -sL https://install.python-poetry.org | python - -y
+
+    - name: Update PATH
+      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Configure poetry
+      run: poetry config virtualenvs.in-project true
+
+    - name: Set up cache
+      uses: actions/cache@v3
+      id: cache
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Ensure cache is healthy
+      if: steps.cache.outputs.cache-hit == 'true'
+      run: timeout 10s pip --version || rm -rf .venv
+
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Lint with black, isort, and flake8
+      run: |
+        poetry run black . --check
+        poetry run isort . --check --resolve-all-configs
+        poetry run flake8
+    - name: Type checking with mypy
+      run: |
+        poetry run mypy .
+
+    - name: Release check
+      run: python scripts/release_check.py streamlit_fesion/__init__.py
+
+    # Frontend build is necessary for the package to be importable, in the tests
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16.x'
+        cache: 'yarn'
+        cache-dependency-path: streamlit_fesion/frontend/yarn.lock
+    - name: Install the frontend dependencies
+      run: yarn install --frozen-lockfile
+      working-directory: streamlit_fesion/frontend
+    - name: Build the frontend
+      run: yarn run build
+      working-directory: streamlit_fesion/frontend
+
+    - name: Test with pytest
+      run: |
+        poetry run pytest

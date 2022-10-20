@@ -83,6 +83,8 @@ const MyComponent: React.VFC = () => {
 
           output_height, output_width = output_image4chan.shape[:2]
           `);
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           if (err.name === "PythonError") {
             const serializableError = {
