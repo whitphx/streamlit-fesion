@@ -35,7 +35,7 @@ const MyComponent: React.VFC = () => {
     ]
   );
   useEffect(() => {
-    if (workerProxy == null) {
+    if (workerProxy == null || !workerProxy.isLoaded) {
       return;
     }
 
