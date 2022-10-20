@@ -48,7 +48,7 @@ type OutMessage = ReadyMessage | LoadedMessage;
 interface ReplyMessageBase {
   type: string;
   error?: Error;
-  data?: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+  data?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 interface OutputImageMessage extends ReplyMessageBase {
   type: "outputImage";
