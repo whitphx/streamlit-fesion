@@ -1,4 +1,4 @@
-import Worker from "./fesion.worker"
+import Worker from "./fesion.worker";
 
 interface WorkerProxyOptions {
   funcName: string;
@@ -20,19 +20,19 @@ export class WorkerProxy {
       funcName: options.funcName,
       funcDefPyCode: options.funcDefPyCode,
       requirements: options.requirements,
-    }
+    };
     this._isLoaded = false;
 
     this.worker = new Worker();
     this.worker.onmessage = (e) => {
       this._processWorkerMessage(e.data);
-    }
+    };
   }
 
   private _processWorkerMessage(msg: OutMessage): void {
     switch (msg.type) {
       case "ready": {
-        this.postInitialData()
+        this.postInitialData();
         break;
       }
       case "loaded": {
@@ -45,8 +45,8 @@ export class WorkerProxy {
     const initDataMessage: InitDataMessage = {
       type: "initData",
       data: this.workerInitialData,
-    }
-    this.worker.postMessage(initDataMessage)
+    };
+    this.worker.postMessage(initDataMessage);
   }
 
   private _asyncPostMessage(
@@ -82,7 +82,7 @@ export class WorkerProxy {
 
   public process(imageData: ImageData): Promise<ImageData> {
     if (!this._isLoaded) {
-      console.debug("Worker is not loaded")
+      console.debug("Worker is not loaded");
       return Promise.resolve(imageData);
     }
 

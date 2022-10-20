@@ -18,15 +18,14 @@ interface InitDataMessage extends InMessageBase {
 interface InputImageMessage extends InMessageBase {
   type: "inputImage";
   data: {
-    imageData: ImageData
+    imageData: ImageData;
   };
 }
 interface UpdateFilterFuncMessage extends InMessageBase {
-  type: "updateFilterFunc"
-  data: FilterFuncConfig
+  type: "updateFilterFunc";
+  data: FilterFuncConfig;
 }
-type InMessage =
-  | InitDataMessage | InputImageMessage | UpdateFilterFuncMessage
+type InMessage = InitDataMessage | InputImageMessage | UpdateFilterFuncMessage;
 
 interface OutMessageBase {
   type: string;
@@ -34,11 +33,11 @@ interface OutMessageBase {
 }
 // Indicates the worker process is ready to receive the messages from the main thread.
 interface ReadyMessage {
-  type: "ready",
+  type: "ready";
 }
 // Indicates the Pyodide environment and the initial code are loaded.
 interface LoadedMessage {
-  type: "loaded",
+  type: "loaded";
 }
 
 type OutMessage = ReadyMessage | LoadedMessage;

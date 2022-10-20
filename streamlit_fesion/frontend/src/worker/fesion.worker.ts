@@ -1,10 +1,10 @@
-import { PyodideInterface, PyProxy } from "pyodide"
+import { PyodideInterface, PyProxy } from "pyodide";
 import { PromiseDelegate } from "@lumino/coreutils";
 
 // To use worker-loader with CRA,
 // followed https://github.com/dominique-mueller/create-react-app-typescript-web-worker-setup
 declare const self: DedicatedWorkerGlobalScope;
-export default {} as typeof Worker & { new(): Worker };
+export default {} as typeof Worker & { new (): Worker };
 
 interface FesionWorkerContext extends Worker {
   postMessage(message: OutMessage, transfer: Transferable[]): void;
@@ -24,11 +24,8 @@ const initDataPromiseDelegate = new PromiseDelegate<InitDataMessage["data"]>();
 let pyodide: PyodideInterface;
 let imageFilterPyFuncName: string;
 async function loadPyodideAndPackages() {
-  const {
-    funcName,
-    funcDefPyCode,
-    requirements
-  } = await initDataPromiseDelegate.promise;
+  const { funcName, funcDefPyCode, requirements } =
+    await initDataPromiseDelegate.promise;
 
   pyodide = await loadPyodide();
 
@@ -52,8 +49,8 @@ async function loadPyodideAndPackages() {
 
   ctx.postMessage({
     type: "loaded",
-  })
-  console.log("Worker initialization finished.")
+  });
+  console.log("Worker initialization finished.");
 }
 const pyodideReadyPromise = loadPyodideAndPackages();
 
@@ -84,8 +81,7 @@ async function filterFn(imageData: ImageData): Promise<ImageData> {
   output_height, output_width = output_image4chan.shape[:2]
   `);
 
-  const outputImageProxy: PyProxy =
-    pyodide.globals.get("output_image4chan");
+  const outputImageProxy: PyProxy = pyodide.globals.get("output_image4chan");
   const outputImageBuffer = outputImageProxy.getBuffer("u8");
   outputImageProxy.destroy();
 
@@ -121,7 +117,7 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
   await pyodideReadyPromise;
 
   const messagePort = event.ports[0];
-  const postReplyMessage = (msg: ReplyMessage) => messagePort.postMessage(msg)
+  const postReplyMessage = (msg: ReplyMessage) => messagePort.postMessage(msg);
 
   try {
     switch (data.type) {
@@ -133,9 +129,9 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
         postReplyMessage({
           type: "outputImage",
           data: {
-            imageData: outputImageData
-          }
-        })
+            imageData: outputImageData,
+          },
+        });
         break;
       }
       case "updateFilterFunc": {
@@ -151,7 +147,7 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
               del ${imageFilterPyFuncName}
           except NameError:
               pass
-        `)
+        `);
 
         // Run the Python code including the user-defined filter function.
         await pyodide.runPythonAsync(funcDefPyCode);
@@ -160,7 +156,7 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
 
         postReplyMessage({
           type: "reply",
-        })
+        });
         break;
       }
     }
@@ -174,5 +170,5 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
 
 // At the end, after all the code is loaded, send the message to notify the worker is ready to receive the messages from the main thread.
 ctx.postMessage({
-  type: "ready"
-})
+  type: "ready",
+});
