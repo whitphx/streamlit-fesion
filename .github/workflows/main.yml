@@ -69,7 +69,7 @@ jobs:
         poetry run mypy .
 
     - name: Release check
-      run: python scripts/release_check.py streamlit_fesion/component.py
+      run: python scripts/release_check.py streamlit_fesion/__init__.py
 
     # Frontend build is necessary for the package to be importable, in the tests
     - name: Set up Node.js
