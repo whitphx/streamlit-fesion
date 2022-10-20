@@ -49,8 +49,7 @@ const MyComponent: React.VFC = () => {
   playingRef.current = playing;
   const onFrame = useCallback(
     async (imageData: ImageData) => {
-      if (workerProxy == null) {
-        console.log("Worker has not been loaded.");
+      if (workerProxy == null || !workerProxy.isLoaded) {
         setFrame(imageData);
         return;
       }
@@ -75,7 +74,7 @@ const MyComponent: React.VFC = () => {
   return (
     <Box>
       <Box position="relative" display="inline-block">
-        {playing && workerProxy == null && (
+        {playing && (workerProxy == null || !workerProxy.isLoaded) && (
           <Box
             position="absolute"
             top={0}

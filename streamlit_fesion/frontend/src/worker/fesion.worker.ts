@@ -52,6 +52,9 @@ async function loadPyodideAndPackages() {
 
   imageFilterPyFuncName = funcName;
 
+  ctx.postMessage({
+    type: "loaded",
+  })
   console.log("Worker initialization finished.")
 }
 const pyodideReadyPromise = loadPyodideAndPackages();

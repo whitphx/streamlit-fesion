@@ -9,7 +9,11 @@ interface WorkerProxyOptions {
 export class WorkerProxy {
   private worker: Worker;
   private workerInitialData: WorkerInitialData;
-  private isLoaded: boolean;
+
+  private _isLoaded: boolean;
+  public get isLoaded(): boolean {
+    return this._isLoaded;
+  }
 
   public constructor(options: WorkerProxyOptions) {
     this.workerInitialData = {
@@ -17,7 +21,7 @@ export class WorkerProxy {
       funcDefPyCode: options.funcDefPyCode,
       requirements: options.requirements,
     }
-    this.isLoaded = false;
+    this._isLoaded = false;
 
     this.worker = new Worker();
     this.worker.onmessage = (e) => {
@@ -28,20 +32,21 @@ export class WorkerProxy {
   private _processWorkerMessage(msg: OutMessage): void {
     switch (msg.type) {
       case "ready": {
-        this.postInitialData().then(() => {
-          this.isLoaded = true;
-        });
+        this.postInitialData()
         break;
+      }
+      case "loaded": {
+        this._isLoaded = true;
       }
     }
   }
 
-  private async postInitialData(): Promise<void> {
+  private postInitialData() {
     const initDataMessage: InitDataMessage = {
       type: "initData",
       data: this.workerInitialData,
     }
-    await this.worker.postMessage(initDataMessage)
+    this.worker.postMessage(initDataMessage)
   }
 
   private _asyncPostMessage(
@@ -76,7 +81,7 @@ export class WorkerProxy {
   }
 
   public process(imageData: ImageData): Promise<ImageData> {
-    if (!this.isLoaded) {
+    if (!this._isLoaded) {
       console.debug("Not yet loaded")
       return Promise.resolve(imageData);
     }
