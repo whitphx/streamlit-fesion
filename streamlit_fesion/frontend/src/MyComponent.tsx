@@ -41,7 +41,7 @@ const MyComponent: React.VFC = () => {
     ]
   );
   useEffect(() => {
-    if (workerProxy == null || !workerProxy.isLoaded) {
+    if (workerProxy == null) {
       return;
     }
 
@@ -56,7 +56,7 @@ const MyComponent: React.VFC = () => {
       requirements: filterDepPackages,
     });
   }, [
-    workerProxy,
+    // `workerProxy` is excluded from the deps so that this function is not called just reacting the initialization of `workerProxy`.
     imageFilterPyFuncName,
     imageFilterPyFuncDefCode,
     imageFilterDepPackagesJson,
