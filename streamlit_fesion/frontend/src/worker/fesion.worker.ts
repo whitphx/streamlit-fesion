@@ -136,6 +136,11 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
       }
       case "updateFilterFunc": {
         const { funcName, funcDefPyCode, requirements } = data.data;
+        console.debug("updateFilterFunc", {
+          funcName,
+          funcDefPyCode,
+          requirements,
+        });
 
         // Load packages used in the user-defined filter function.
         await pyodide.loadPackagesFromImports(funcDefPyCode);
