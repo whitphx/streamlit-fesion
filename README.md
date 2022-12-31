@@ -1,7 +1,7 @@
 streamlit-fesion
 ===
 
-Streamlit component for **f**ront**e**nd computer vi**sion** processing.
+Streamlit component for **f**ront**e**nd computer vi**sion** processing with Wasm/Pyodide.
 
 Sister project: [`streamlit-webrtc`](https://github.com/whitphx/streamlit-webrtc)
 
