@@ -1,21 +1,9 @@
-name: Tests
+name: Test, Build, and Publish
 
-on:
-  push:
-    branches:
-      - main
-      - develop/**
-    paths-ignore:
-      - 'streamlit_fesion/frontend/**'
-  pull_request:
-    branches:
-      - main
-      - develop/**
-    paths-ignore:
-      - 'streamlit_fesion/frontend/**'
+on: [push]
 
 jobs:
-  tests:
+  test-and-build:
 
     runs-on: ubuntu-latest
     strategy:
@@ -88,3 +76,98 @@ jobs:
     - name: Test with pytest
       run: |
         poetry run pytest
+
+    # Build
+    - name: Package
+      run: poetry build
+
+    - name: Upload the built files as an artifact
+      uses: actions/upload-artifact@v3
+      if: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+      with:
+        path: dist
+        name: streamlit-fesion-${{ github.sha }}.tgz
+
+    - name: Upload the built files as an artifact (when pushed with a version tag)
+      uses: actions/upload-artifact@v3
+      if: startsWith(github.ref, 'refs/tags/v')
+      with:
+        path: dist
+        name: streamlit-fesion-${{ github.ref_name }}.tgz
+
+  test-frontend:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: streamlit_fesion/frontend
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+        cache-dependency-path: streamlit_fesion/frontend/yarn.lock
+    - run: yarn install --frozen-lockfile
+    - name: Lint
+      run: |
+        yarn run check:eslint
+        yarn run check:prettier
+    # - run: yarn test
+    - run: yarn run build
+
+  publish:
+    if: ${{ !failure() && startsWith(github.ref, 'refs/tags/v') }}  # `!failure()` is necessary to avoid skipping this job after successful build: https://github.com/actions/runner/issues/491
+    needs: [test-and-build, test-frontend]
+
+    permissions:
+      contents: write  # Necessary for creating releases: https://github.com/softprops/action-gh-release#permissions
+
+    runs-on: ubuntu-latest
+
+    env:
+      python-version: "3.11.2"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ env.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.python-version }}
+
+      # Copied from https://github.com/python-poetry/poetry/blob/c71deb4b75b3672116b3199b2f9ab7e2bf520844/.github/workflows/main.yml#L46-L96
+      - name: Get full Python version
+        id: full-python-version
+        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
+
+      - name: Bootstrap poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - -y
+
+      - name: Update PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: streamlit-fesion-${{ github.ref_name }}.tgz
+          path: dist
+
+      - name: Publish
+        run: poetry publish -u __token__ -p $PYPI_API_TOKEN
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create a new release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
