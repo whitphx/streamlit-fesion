@@ -47,6 +47,10 @@ async function loadPyodideAndPackages() {
 
   imageFilterPyFuncName = funcName;
 
+  await pyodide.runPythonAsync(`
+import asyncio
+`);
+
   ctx.postMessage({
     type: "loaded",
   });
@@ -70,7 +74,10 @@ async function filterFn(imageData: ImageData): Promise<ImageData> {
   input_image4chan = ${NUMPY_GLOBAL_ALIAS}.asarray(fesionImageData.to_py()).reshape((fesionImageHeight, fesionImageWidth, 4)) # 4 channels (RGBA)
   input_image = input_image4chan[:,:,:3]
 
-  output_image = ${imageFilterPyFuncName}(input_image)
+  if asyncio.iscoroutinefunction(${imageFilterPyFuncName}):
+      output_image = await ${imageFilterPyFuncName}(input_image)
+  else:
+      output_image = ${imageFilterPyFuncName}(input_image)
 
   if ${NUMPY_GLOBAL_ALIAS}.issubdtype(output_image.dtype, ${NUMPY_GLOBAL_ALIAS}.floating):
       output_image = (output_image * 255).astype(${NUMPY_GLOBAL_ALIAS}.uint8)
