@@ -63,7 +63,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '16.x'
+        node-version-file: .nvmrc
         cache: 'yarn'
         cache-dependency-path: streamlit_fesion/frontend/yarn.lock
     - name: Install the frontend dependencies
@@ -103,17 +103,12 @@ jobs:
       run:
         working-directory: streamlit_fesion/frontend
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version-file: .nvmrc
         cache: 'yarn'
         cache-dependency-path: streamlit_fesion/frontend/yarn.lock
     - run: yarn install --frozen-lockfile
