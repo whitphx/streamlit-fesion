@@ -59,7 +59,16 @@ jobs:
     - name: Release check
       run: python scripts/release_check.py streamlit_fesion/__init__.py
 
-    # Frontend build is necessary for the package to be importable, in the tests
+    # The frontend build directory is necessary to import the package
+    # avoiding an error from `components.declare_component`.
+    - name: Create a mock frontend build directory
+      run: mkdir streamlit_fesion/frontend/build
+
+    - name: Test with pytest
+      run: |
+        poetry run pytest
+
+    # Build
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
@@ -73,11 +82,6 @@ jobs:
       run: yarn run build
       working-directory: streamlit_fesion/frontend
 
-    - name: Test with pytest
-      run: |
-        poetry run pytest
-
-    # Build
     - name: Package
       run: poetry build
 
