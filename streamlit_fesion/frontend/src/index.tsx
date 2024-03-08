@@ -1,11 +1,16 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import CssBaseline from "@mui/material/CssBaseline";
 import ThemeProvider from "./ThemeProvider";
 import { StreamlitProvider } from "streamlit-component-lib-react-hooks";
 import MyComponent from "./MyComponent";
 
-ReactDOM.render(
+const container = document.getElementById("root");
+if (container === null) {
+  throw new Error("Root element not found");
+}
+const root = createRoot(container);
+root.render(
   <React.StrictMode>
     <CssBaseline />
     <StreamlitProvider>
@@ -13,6 +18,5 @@ ReactDOM.render(
         <MyComponent />
       </ThemeProvider>
     </StreamlitProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
+  </React.StrictMode>
 );
