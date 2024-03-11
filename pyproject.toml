@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "streamlit-fesion"
-version = "0.5.1"
+version = "0.5.2"
 description = ""
 authors = ["Yuichiro Tachibana (Tsuchiya) <t.yic.yt@gmail.com>"]
 license = "MIT"
