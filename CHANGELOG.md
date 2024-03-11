@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.2] - 2024-03-11
+
+### Fix
+
+- Switch the bundler from Webpack to Vite and refactoring the worker code structure, [#13](https://github.com/whitphx/streamlit-fesion/pull/13).
+
 ## [0.5.1] - 2024-03-08
 
 ### Fix
