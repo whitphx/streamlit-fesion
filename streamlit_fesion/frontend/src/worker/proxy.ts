@@ -1,4 +1,4 @@
-import Worker from "./fesion.worker";
+import Worker from "./fesion.worker?worker&inline";
 
 interface WorkerProxyOptions {
   funcName: string;
