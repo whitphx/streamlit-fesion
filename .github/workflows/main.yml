@@ -62,7 +62,7 @@ jobs:
     # The frontend build directory is necessary to import the package
     # avoiding an error from `components.declare_component`.
     - name: Create a mock frontend build directory
-      run: mkdir streamlit_fesion/frontend/build
+      run: mkdir streamlit_fesion/frontend/dist
 
     - name: Test with pytest
       run: |
@@ -72,7 +72,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version-file: .nvmrc
+        node-version-file: streamlit_fesion/frontend/.nvmrc
         cache: 'yarn'
         cache-dependency-path: streamlit_fesion/frontend/yarn.lock
     - name: Install the frontend dependencies
@@ -112,7 +112,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version-file: .nvmrc
+        node-version-file: streamlit_fesion/frontend/.nvmrc
         cache: 'yarn'
         cache-dependency-path: streamlit_fesion/frontend/yarn.lock
     - run: yarn install --frozen-lockfile

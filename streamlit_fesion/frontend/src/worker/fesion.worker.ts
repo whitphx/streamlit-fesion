@@ -1,10 +1,8 @@
-import { PyodideInterface, PyProxy } from "pyodide";
+import type { PyodideInterface } from "pyodide";
 import { PromiseDelegate } from "@lumino/coreutils";
+import { ImageFilterExecutor } from "./executor";
 
-// To use worker-loader with CRA,
-// followed https://github.com/dominique-mueller/create-react-app-typescript-web-worker-setup
 declare const self: DedicatedWorkerGlobalScope;
-export default {} as typeof Worker & { new (): Worker };
 
 interface FesionWorkerContext extends Worker {
   postMessage(message: OutMessage, transfer: Transferable[]): void;
@@ -14,42 +12,26 @@ interface FesionWorkerContext extends Worker {
 // Ref: https://v4.webpack.js.org/loaders/worker-loader/#loading-with-worker-loader
 const ctx: FesionWorkerContext = self as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");
-declare let loadPyodide: () => Promise<PyodideInterface>;
-
-const NUMPY_GLOBAL_ALIAS = "gai6sa2eM9Atiev5Shu5ohtie6phai8i"; // To avoid name conflict
+let executor: ImageFilterExecutor;
 
 const initDataPromiseDelegate = new PromiseDelegate<InitDataMessage["data"]>();
 
 let pyodide: PyodideInterface;
-let imageFilterPyFuncName: string;
 async function loadPyodideAndPackages() {
   const { funcName, funcDefPyCode, requirements } =
     await initDataPromiseDelegate.promise;
 
+  const pyodideModule = await import(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.mjs"
+  );
+  const loadPyodide = pyodideModule.loadPyodide;
   pyodide = await loadPyodide();
 
-  /* Initialize the Python environment. */
+  executor = new ImageFilterExecutor(pyodide);
 
-  // Import NumPy, which is used in the wrapper script.
-  await pyodide
-    .loadPackage(["numpy"])
-    .then(() =>
-      pyodide.runPythonAsync(`import numpy as ${NUMPY_GLOBAL_ALIAS}`)
-    );
-
-  // Load packages used in the user-defined filter function.
-  await pyodide.loadPackagesFromImports(funcDefPyCode);
-  await pyodide.loadPackage(requirements);
-
-  // Run the Python code including the user-defined filter function.
-  await pyodide.runPythonAsync(funcDefPyCode);
-
-  imageFilterPyFuncName = funcName;
-
-  await pyodide.runPythonAsync(`
-import asyncio
-`);
+  executor.setFilterFunc(funcName, funcDefPyCode, requirements);
 
   ctx.postMessage({
     type: "loaded",
@@ -57,59 +39,6 @@ import asyncio
   console.log("Worker initialization finished.");
 }
 const pyodideReadyPromise = loadPyodideAndPackages();
-
-async function filterFn(imageData: ImageData): Promise<ImageData> {
-  /* eslint-disable @typescript-eslint/ban-ts-comment */
-  // @ts-ignore
-  self.fesionImageWidth = imageData.width;
-  // @ts-ignore
-  self.fesionImageHeight = imageData.height;
-  // @ts-ignore
-  self.fesionImageData = imageData.data;
-  /* eslint-enable */
-
-  await pyodide.runPythonAsync(`
-  from js import fesionImageWidth, fesionImageHeight, fesionImageData  # Import from JS globals
-
-  input_image4chan = ${NUMPY_GLOBAL_ALIAS}.asarray(fesionImageData.to_py()).reshape((fesionImageHeight, fesionImageWidth, 4)) # 4 channels (RGBA)
-  input_image = input_image4chan[:,:,:3]
-
-  if asyncio.iscoroutinefunction(${imageFilterPyFuncName}):
-      output_image = await ${imageFilterPyFuncName}(input_image)
-  else:
-      output_image = ${imageFilterPyFuncName}(input_image)
-
-  if ${NUMPY_GLOBAL_ALIAS}.issubdtype(output_image.dtype, ${NUMPY_GLOBAL_ALIAS}.floating):
-      output_image = (output_image * 255).astype(${NUMPY_GLOBAL_ALIAS}.uint8)
-
-  output_alpha = ${NUMPY_GLOBAL_ALIAS}.full((fesionImageHeight, fesionImageWidth, 1), fill_value=255, dtype=${NUMPY_GLOBAL_ALIAS}.uint8)
-  output_image4chan = ${NUMPY_GLOBAL_ALIAS}.concatenate((output_image, output_alpha), axis=2).copy()
-
-  output_height, output_width = output_image4chan.shape[:2]
-  `);
-
-  const outputImageProxy: PyProxy = pyodide.globals.get("output_image4chan");
-  const outputImageBuffer = outputImageProxy.getBuffer("u8");
-  outputImageProxy.destroy();
-
-  const outputWidth: number = pyodide.globals.get("output_width");
-  const outputHeight: number = pyodide.globals.get("output_height");
-
-  try {
-    const newImageData = new ImageData(
-      new Uint8ClampedArray(
-        outputImageBuffer.data.buffer,
-        outputImageBuffer.data.byteOffset,
-        outputImageBuffer.data.byteLength
-      ),
-      outputWidth,
-      outputHeight
-    );
-    return newImageData;
-  } finally {
-    outputImageBuffer.release();
-  }
-}
 
 self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
   const data = event.data;
@@ -131,7 +60,7 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
       case "inputImage": {
         const imageData = data.data.imageData;
 
-        const outputImageData = await filterFn(imageData);
+        const outputImageData = await executor.executeFilter(imageData);
 
         postReplyMessage({
           type: "outputImage",
@@ -149,22 +78,7 @@ self.onmessage = async (event: MessageEvent<InMessage>): Promise<void> => {
           requirements,
         });
 
-        // Load packages used in the user-defined filter function.
-        await pyodide.loadPackagesFromImports(funcDefPyCode);
-        await pyodide.loadPackage(requirements);
-
-        // Delete the previous filter func to avoid memory leaks.
-        await pyodide.runPythonAsync(`
-          try:
-              del ${imageFilterPyFuncName}
-          except NameError:
-              pass
-        `);
-
-        // Run the Python code including the user-defined filter function.
-        await pyodide.runPythonAsync(funcDefPyCode);
-
-        imageFilterPyFuncName = funcName;
+        await executor.setFilterFunc(funcName, funcDefPyCode, requirements);
 
         postReplyMessage({
           type: "reply",
