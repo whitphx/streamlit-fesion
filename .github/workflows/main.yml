@@ -62,7 +62,7 @@ jobs:
     # The frontend build directory is necessary to import the package
     # avoiding an error from `components.declare_component`.
     - name: Create a mock frontend build directory
-      run: mkdir streamlit_fesion/frontend/build
+      run: mkdir streamlit_fesion/frontend/dist
 
     - name: Test with pytest
       run: |
