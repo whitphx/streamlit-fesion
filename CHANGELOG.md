@@ -3,23 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.5.3] - 2024-03-11
+## [0.5.4] - 2024-03-11
 
 ### Fix
 
+- Fix the publish setting.
 - Introduce Ruff, [#17](https://github.com/whitphx/streamlit-fesion/pull/17).
-
-## [0.5.2] - 2024-03-11
-
-### Fix
-
 - Switch the bundler from Webpack to Vite and refactoring the worker code structure, [#13](https://github.com/whitphx/streamlit-fesion/pull/13).
-
-## [0.5.1] - 2024-03-08
-
-### Fix
-
 - Internal package updates, [#12](https://github.com/whitphx/streamlit-fesion/pull/12).
+
+## [0.5.3]
+
+Skipped.
+
+## [0.5.2]
+
+Skipped.
+
+## [0.5.1]
+
+Skipped.
 
 ## [0.4.0] - 2022-10-21
 
