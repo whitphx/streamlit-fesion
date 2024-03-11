@@ -1,95 +1,69 @@
 import type { PyodideInterface } from "pyodide";
-import type { PyProxy } from "pyodide/ffi";
-
-declare const self: DedicatedWorkerGlobalScope;
-
-const NUMPY_GLOBAL_ALIAS = "gai6sa2eM9Atiev5Shu5ohtie6phai8i"; // To avoid name conflict
+import type { PyProxy, PyCallable } from "pyodide/ffi";
 
 export class ImageFilterExecutor {
   private pyodide: PyodideInterface;
-  private setupPromise: Promise<void>;
-  private imageFilterPyFuncName: string | undefined = undefined;
+  private numpyPromise: Promise<PyProxy>;
+  private imageFilterPyFunc: PyCallable | undefined = undefined;
 
   constructor(pyodide: PyodideInterface) {
     this.pyodide = pyodide;
-    this.setupPromise = this.pyodide
+    this.numpyPromise = this.pyodide
       .loadPackage(["numpy"])
-      .then(() =>
-        pyodide.runPythonAsync(`import numpy as ${NUMPY_GLOBAL_ALIAS}`)
-      )
-      .then(() => pyodide.runPythonAsync(`import asyncio`));
+      .then(() => pyodide.pyimport("numpy"));
   }
 
-  public setFilterFunc(
+  public async setFilterFunc(
     funcName: string,
     funcDefPyCode: string,
     requirements: string[]
   ): Promise<void> {
-    this.setupPromise = this.setupPromise.then(async () => {
-      await this.pyodide.loadPackagesFromImports(funcDefPyCode);
-      await this.pyodide.loadPackage(requirements);
+    await this.pyodide.loadPackagesFromImports(funcDefPyCode);
+    await this.pyodide.loadPackage(requirements);
 
-      // Delete the previous filter func to avoid memory leaks.
-      await this.pyodide.runPythonAsync(`
-        try:
-            del ${funcName}
-        except NameError:
-            pass
-      `);
+    // Delete the previous filter func to avoid memory leaks.
+    await this.pyodide.runPythonAsync(`
+try:
+  del ${funcName}
+except NameError:
+  pass
+    `);
 
-      // Run the Python code including the user-defined filter function.
-      await this.pyodide.runPythonAsync(funcDefPyCode);
+    // Run the Python code including the user-defined filter function.
+    await this.pyodide.runPythonAsync(funcDefPyCode);
 
-      this.imageFilterPyFuncName = funcName;
-    });
-
-    return this.setupPromise;
+    this.imageFilterPyFunc = this.pyodide.globals.get(funcName);
   }
 
   public async executeFilter(imageData: ImageData): Promise<ImageData> {
-    await this.setupPromise;
+    const np = await this.numpyPromise;
 
-    const imageFilterPyFuncName = this.imageFilterPyFuncName;
-    if (imageFilterPyFuncName == undefined) {
+    const imageFilterPyFunc = this.imageFilterPyFunc;
+    if (imageFilterPyFunc == undefined) {
       return imageData;
     }
 
-    /* eslint-disable @typescript-eslint/ban-ts-comment */
-    // @ts-ignore
-    self.fesionImageWidth = imageData.width;
-    // @ts-ignore
-    self.fesionImageHeight = imageData.height;
-    // @ts-ignore
-    self.fesionImageData = imageData.data;
-    /* eslint-enable */
+    const inputImage4chan = np
+      .asarray(this.pyodide.toPy(imageData.data))
+      .reshape([imageData.height, imageData.width, 4]);
+    const inputImage = np.take(inputImage4chan, [0, 1, 2], 2);
 
-    await this.pyodide.runPythonAsync(`
-    from js import fesionImageWidth, fesionImageHeight, fesionImageData  # Import from JS globals
+    let outputImage = await imageFilterPyFunc(inputImage);
 
-    input_image4chan = ${NUMPY_GLOBAL_ALIAS}.asarray(fesionImageData.to_py()).reshape((fesionImageHeight, fesionImageWidth, 4)) # 4 channels (RGBA)
-    input_image = input_image4chan[:,:,:3]
+    if (np.issubdtype(outputImage.dtype, np.floating)) {
+      outputImage = np.multiply(outputImage, 255).astype(np.uint8);
+    }
 
-    if asyncio.iscoroutinefunction(${imageFilterPyFuncName}):
-        output_image = await ${imageFilterPyFuncName}(input_image)
-    else:
-        output_image = ${imageFilterPyFuncName}(input_image)
+    const outputHeight = outputImage.shape[0];
+    const outputWidth = outputImage.shape[1];
 
-    if ${NUMPY_GLOBAL_ALIAS}.issubdtype(output_image.dtype, ${NUMPY_GLOBAL_ALIAS}.floating):
-        output_image = (output_image * 255).astype(${NUMPY_GLOBAL_ALIAS}.uint8)
+    const outputAlpha = np.full([outputHeight, outputWidth, 1], 255, np.uint8);
+    const outputImage4chan = np.concatenate(
+      this.pyodide.toPy([outputImage, outputAlpha]),
+      2
+    );
 
-    output_alpha = ${NUMPY_GLOBAL_ALIAS}.full((fesionImageHeight, fesionImageWidth, 1), fill_value=255, dtype=${NUMPY_GLOBAL_ALIAS}.uint8)
-    output_image4chan = ${NUMPY_GLOBAL_ALIAS}.concatenate((output_image, output_alpha), axis=2).copy()
-
-    output_height, output_width = output_image4chan.shape[:2]
-    `);
-
-    const outputImageProxy: PyProxy =
-      this.pyodide.globals.get("output_image4chan");
-    const outputImageBuffer = outputImageProxy.getBuffer("u8");
-    outputImageProxy.destroy();
-
-    const outputWidth: number = this.pyodide.globals.get("output_width");
-    const outputHeight: number = this.pyodide.globals.get("output_height");
+    const outputImageBuffer = outputImage4chan.getBuffer("u8");
 
     try {
       const newImageData = new ImageData(
