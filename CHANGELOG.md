@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.3] - 2024-03-11
+
+### Fix
+
+- Introduce Ruff, [#17](https://github.com/whitphx/streamlit-fesion/pull/17).
+
 ## [0.5.2] - 2024-03-11
 
 ### Fix
