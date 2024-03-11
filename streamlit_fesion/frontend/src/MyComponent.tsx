@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRenderData } from "streamlit-component-lib-react-hooks";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -8,7 +8,7 @@ import ImageDataPreview from "./ImageDataPreview";
 import { setComponentValue } from "./component-value";
 import { WorkerProxy } from "./worker/proxy";
 
-const MyComponent: React.VFC = () => {
+function MyComponent() {
   const renderData = useRenderData();
 
   const imageFilterPyFuncDefCode = renderData.args["func_def_code"];
@@ -147,6 +147,6 @@ const MyComponent: React.VFC = () => {
       </Box>
     </Box>
   );
-};
+}
 
 export default MyComponent;
