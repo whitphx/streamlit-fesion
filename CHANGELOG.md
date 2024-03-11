@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
+- Fix the Python filter function executor not to use `runPythonAsync()` to avoid Python namespace pollution, [#19](https://github.com/whitphx/streamlit-fesion/pull/19).
+
+## [0.5.4] - 2024-03-11
+
+### Fix
+
 - Fix the publish setting.
 - Introduce Ruff, [#17](https://github.com/whitphx/streamlit-fesion/pull/17).
 - Switch the bundler from Webpack to Vite and refactoring the worker code structure, [#13](https://github.com/whitphx/streamlit-fesion/pull/13).
