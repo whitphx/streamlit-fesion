@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.6] - 2025-03-26
+
+### Fix
+
+- Fix the package manager and CI/CD pipeline.
+
 ## [0.5.5] - 2024-03-11
 
 ### Fix
