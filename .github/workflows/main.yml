@@ -74,10 +74,10 @@ jobs:
 
     - name: Upload the built files as an artifact
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.python-version == '3.11' && ! startsWith(github.ref, 'refs/tags/v') }}
+      if: ${{ matrix.python-version == '3.11' }}
       with:
+        name: streamlit-fesion-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || github.sha  }}
         path: dist
-        name: streamlit-fesion-${{ github.sha }}.tgz
 
   deploy-preview-wheel:
     runs-on: ubuntu-latest
