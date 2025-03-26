@@ -39,8 +39,7 @@ jobs:
         uv run ruff format . --check
 
     - name: Type checking with mypy
-      run: |
-        uv run mypy .
+      run: uv run mypy .
 
     - name: Release check
       run: python scripts/release_check.py streamlit_fesion/__init__.py
@@ -51,8 +50,7 @@ jobs:
       run: mkdir streamlit_fesion/frontend/dist
 
     - name: Test with pytest
-      run: |
-        uv run pytest
+      run: uv run pytest
 
   build:
     needs: [test]
