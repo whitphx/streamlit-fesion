@@ -1,35 +1,41 @@
-[tool.poetry]
+[project]
 name = "streamlit-fesion"
 version = "0.5.5"
 description = ""
-authors = ["Yuichiro Tachibana (Tsuchiya) <t.yic.yt@gmail.com>"]
-license = "MIT"
+authors = [{ name = "Yuichiro Tachibana (Tsuchiya)", email = "t.yic.yt@gmail.com" }]
+requires-python = ">=3.9,!=3.9.7"  # 3.9.7 is excluded due to https://github.com/streamlit/streamlit/pull/5168
 readme = "README.md"
-repository = "https://github.com/whitphx/streamlit-webrtc"
-include = ["./streamlit_fesion/frontend/dist/**/*"]
-exclude = ["streamlit_fesion/frontend/**/*", "!streamlit_fesion/frontend/dist/**/*"]
+license = "MIT"
+dependencies = ["streamlit>=1.0.0"]
 
+[project.urls]
+Repository = "https://github.com/whitphx/streamlit-webrtc"
 
-[tool.poetry.dependencies]
-python = ">=3.7,<3.11,!=3.9.7"  # 3.9.7 is excluded due to https://github.com/streamlit/streamlit/pull/5168
-streamlit = "^1.0.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.3.2"
-pytest = "^6.2.5"
-mypy = "^0.910"
-scikit-image = "^0.18.3"
-click = ">=7.0,<8.0"  # We must specify the click version because we install older versions of Streamlit in the CI process and their depending click version is different from the newer releases.
-# It is necessary to specify numpy and pandas versions for Poetry to resolve the package versions correctly and avoid errors.
-numpy = "^1.21.0"
-pandas = [
-  {version = "1.1.5", python = ">=3.7,<3.8"},
-  {version = "^1.4.0", python = ">=3.8,<3.11"},
+[dependency-groups]
+dev = [
+    "ruff>=0.9.10",
+    "pytest>=7.1.2",
+    "mypy[faster-cache]>=1.15.0",
+    "scikit-image>=0.18.3",
 ]
 
-[tool.isort]
-profile = "black"
+[tool.hatch.build.targets.sdist]
+include = ["./streamlit_fesion/frontend/dist/**/*"]
+exclude = [
+    "streamlit_fesion/frontend/**/*",
+    "!streamlit_fesion/frontend/dist/**/*",
+]
+
+[tool.hatch.build.targets.wheel]
+include = ["./streamlit_fesion/frontend/dist/**/*"]
+exclude = [
+    "streamlit_fesion/frontend/**/*",
+    "!streamlit_fesion/frontend/dist/**/*",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff.lint]
+extend-select = ["I"]
