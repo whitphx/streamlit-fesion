@@ -1,6 +1,7 @@
 import importlib.metadata
+from typing import Optional
 
-__version__: str | None = None
+__version__: Optional[str] = None
 
 try:
     __version__ = importlib.metadata.version(__name__)
