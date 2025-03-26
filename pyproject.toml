@@ -20,18 +20,12 @@ dev = [
 ]
 
 [tool.hatch.build.targets.sdist]
-include = ["./streamlit_fesion/frontend/dist/**/*"]
-exclude = [
-    "streamlit_fesion/frontend/**/*",
-    "!streamlit_fesion/frontend/dist/**/*",
-]
+include = ["/streamlit_fesion"]
+exclude = ["/streamlit_fesion/frontend", "!/streamlit_fesion/frontend/dist"]
 
 [tool.hatch.build.targets.wheel]
-include = ["./streamlit_fesion/frontend/dist/**/*"]
-exclude = [
-    "streamlit_fesion/frontend/**/*",
-    "!streamlit_fesion/frontend/dist/**/*",
-]
+include = ["/streamlit_fesion"]
+exclude = ["/streamlit_fesion/frontend", "!/streamlit_fesion/frontend/dist"]
 
 [build-system]
 requires = ["hatchling"]
