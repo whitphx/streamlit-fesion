@@ -1,11 +1,11 @@
 [project]
 name = "streamlit-fesion"
-version = "0.5.5"
 description = ""
 authors = [{ name = "Yuichiro Tachibana (Tsuchiya)", email = "t.yic.yt@gmail.com" }]
 requires-python = ">=3.9,!=3.9.7"  # 3.9.7 is excluded due to https://github.com/streamlit/streamlit/pull/5168
 readme = "README.md"
 license = "MIT"
+dynamic = ["version"]
 dependencies = ["streamlit>=1.0.0"]
 
 [project.urls]
@@ -28,8 +28,11 @@ include = ["/streamlit_fesion"]
 exclude = ["/streamlit_fesion/frontend", "!/streamlit_fesion/frontend/dist"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff.lint]
 extend-select = ["I"]

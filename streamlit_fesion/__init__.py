@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import streamlit.components.v1 as components
 
+from ._version import __version__
 from streamlit_fesion.image_filter import ImageFilterFunc, transpile_image_filter_func
 
 _RELEASE = True
