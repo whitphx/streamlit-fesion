@@ -5,6 +5,10 @@ import streamlit.components.v1 as components
 
 from streamlit_fesion.image_filter import ImageFilterFunc, transpile_image_filter_func
 
+from ._version import __version__
+
+__all__ = ["streamlit_fesion", "__version__"]
+
 _RELEASE = True
 
 
