@@ -1,6 +1,13 @@
 name: Test, Build, and Publish
 
-on: [push]
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions: {}
 
 jobs:
   test-and-build:
@@ -9,52 +16,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    # The following steps are based on https://github.com/python-poetry/poetry/blob/def1ee8f3ae00c307ca028da53d2347615c5c32b/.github/workflows/main.yml#L51-L84
-    - name: Get full Python version
-      id: full-python-version
-      run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
-
-    - name: Bootstrap poetry
-      run: |
-        curl -sL https://install.python-poetry.org | python - -y
-
-    - name: Update PATH
-      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Configure poetry
-      run: poetry config virtualenvs.in-project true
-
-    - name: Set up cache
-      uses: actions/cache@v3
-      id: cache
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Ensure cache is healthy
-      if: steps.cache.outputs.cache-hit == 'true'
-      run: timeout 10s pip --version || rm -rf .venv
-
     - name: Install dependencies
-      run: poetry install
+      run: uv sync --all-extras --dev
 
     - name: Run Ruff
       run: |
-        poetry run ruff check --output-format=github .
-        poetry run ruff format . --check
+        uv run ruff check --output-format=github .
+        uv run ruff format . --check
 
     - name: Type checking with mypy
       run: |
-        poetry run mypy .
+        uv run mypy .
 
     - name: Release check
       run: python scripts/release_check.py streamlit_fesion/__init__.py
@@ -66,7 +53,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        poetry run pytest
+        uv run pytest
 
     # Build
     - name: Set up Node.js
@@ -83,7 +70,7 @@ jobs:
       working-directory: streamlit_fesion/frontend
 
     - name: Package
-      run: poetry build
+      run: uv build
 
     - name: Upload the built files as an artifact
       uses: actions/upload-artifact@v3
@@ -92,81 +79,125 @@ jobs:
         path: dist
         name: streamlit-fesion-${{ github.sha }}.tgz
 
-    - name: Upload the built files as an artifact (when pushed with a version tag)
-      uses: actions/upload-artifact@v3
-      if: ${{ matrix.python-version == '3.11' && startsWith(github.ref, 'refs/tags/v') }}
-      with:
-        path: dist
-        name: streamlit-fesion-${{ github.ref_name }}.tgz
-
-  test-frontend:
-
+  deploy-preview-wheel:
     runs-on: ubuntu-latest
+    needs: [test-and-build]
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+    name: Deploy wheel file to Cloudflare Pages
+    outputs:
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - run: mkdir -p ${{ runner.temp }}/artifacts/
 
-    defaults:
-      run:
-        working-directory: streamlit_fesion/frontend
+      - name: Download all the dists
+        if: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/download-artifact@v4
+        with:
+          name: streamlit-fesion-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || github.sha  }}
+          path: ${{ runner.temp }}/artifacts/streamlit-fesion
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65
+        id: deploy
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy ${{ runner.temp }}/artifacts/streamlit-fesion --project-name=streamlit-fesion-preview --branch=${{ github.head_ref || github.ref_name }} --commit-hash=${{ github.sha }}
+
+      - name: Comment on the PR to inform the deployment file URLs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const deploymentUrl = '${{ steps.deploy.outputs.deployment-url }}';
+
+            // Get all files in the artifacts directory
+            const artifactsDir = '${{ runner.temp }}/artifacts/streamlit-fesion';
+            const allFiles = fs.readdirSync(artifactsDir);
+            // Filter to include only wheel (.whl) and source distribution (.tar.gz) files
+            const files = allFiles.filter(file => file.endsWith('.whl') || file.endsWith('.tar.gz'));
+
+            // Create message with links to each file
+            let fileLinks = files.map(file => {
+              const installCommand = `pip install ${deploymentUrl}/${file}`;
+              return `- [${file}](${deploymentUrl}/${file})\n  \`\`\`bash\n  ${installCommand}\n  \`\`\``;
+            }).join('\n');
+
+            const message = `📦 Wheel files have been deployed to Cloudflare Pages:
+
+            ${fileLinks}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+  publish-to-pypi:
+    name: Publish Python 🐍 distribution 📦 to PyPI
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test-and-build]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/streamlit-fesion
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js
-      uses: actions/setup-node@v3
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
       with:
-        node-version-file: streamlit_fesion/frontend/.nvmrc
-        cache: 'yarn'
-        cache-dependency-path: streamlit_fesion/frontend/yarn.lock
-    - run: yarn install --frozen-lockfile
-    - name: Lint
-      run: |
-        yarn run check:eslint
-        yarn run check:prettier
-    # - run: yarn test
-    - run: yarn run build
+        name: streamlit-fesion-${{ github.ref_name }}
+        path: dist/
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
 
-  publish:
-    if: ${{ !failure() && startsWith(github.ref, 'refs/tags/v') }}  # `!failure()` is necessary to avoid skipping this job after successful build: https://github.com/actions/runner/issues/491
-    needs: [test-and-build, test-frontend]
+  github-release:
+    name: >-
+      Sign the Python 🐍 distribution 📦 with Sigstore
+      and upload them to GitHub Release
+    needs:
+    - publish-to-pypi
+    runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Necessary for creating releases: https://github.com/softprops/action-gh-release#permissions
-
-    runs-on: ubuntu-latest
-
-    env:
-      python-version: "3.11.2"
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python ${{ env.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.python-version }}
-
-      # Copied from https://github.com/python-poetry/poetry/blob/c71deb4b75b3672116b3199b2f9ab7e2bf520844/.github/workflows/main.yml#L46-L96
-      - name: Get full Python version
-        id: full-python-version
-        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
-
-      - name: Bootstrap poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python - -y
-
-      - name: Update PATH
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: streamlit-fesion-${{ github.ref_name }}.tgz
-          path: dist
-
-      - name: Publish
-        run: poetry publish -u __token__ -p $PYPI_API_TOKEN
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_TOKEN }}
-
-      - name: Create a new release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/*
-          generate_release_notes: true
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: streamlit-fesion-${{ github.ref_name }}
+        path: dist/
+    - name: Sign the dists with Sigstore
+      uses: sigstore/gh-action-sigstore-python@v3.0.0
+      with:
+        inputs: >-
+          ./dist/*.tar.gz
+          ./dist/*.whl
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release create
+        "$GITHUB_REF_NAME"
+        --repo "$GITHUB_REPOSITORY"
+        --notes ""
+    - name: Upload artifact signatures to GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      # Upload to GitHub Release using the `gh` CLI.
+      # `dist/` contains the built packages, and the
+      # sigstore-produced signatures and certificates.
+      run: >-
+        gh release upload
+        "$GITHUB_REF_NAME" dist/**
+        --repo "$GITHUB_REPOSITORY"
